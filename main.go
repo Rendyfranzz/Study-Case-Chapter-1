@@ -27,10 +27,16 @@ func main() {
 	r.Use(middleware.Recoverer)
 	r.Post("/register", controller.Register(conn))
 	r.Post("/login", controller.Login(conn))
+	r.Get("/nib/{id}", controller.GetNib(conn))
+	r.Post("/regisnib", controller.RegisterNib(conn))
+	r.Post("/addnews", controller.AddNews(conn))
+	r.Get("/getnews", controller.GetNews(conn))
 	r.Group(func(r chi.Router) {
 		r.Use(authmid.JWTMiddleware)
 		r.Post("/logout", controller.Logout(conn))
 		r.Get("/test", Index)
+		r.Post("/pengajuan", controller.Pengajuan(conn))
+		r.Put("/updatepengajuan/{nik}", controller.EditPengajuan(conn))
 	})
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		log.Fatal(err)

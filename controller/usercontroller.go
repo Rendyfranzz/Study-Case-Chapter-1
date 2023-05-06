@@ -2,9 +2,10 @@ package controller
 
 import (
 	"crud/config"
+	"crud/entities"
 	"crud/helper"
-	"crud/model"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -19,7 +20,7 @@ type Map map[string]interface{}
 
 func Register(conn *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user model.User
+		var user entities.User
 
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			response := map[string]string{"message": err.Error()}
@@ -44,7 +45,7 @@ func Register(conn *mongo.Client) http.HandlerFunc {
 
 func Login(conn *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var user model.User
+		var user entities.User
 
 		if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -52,10 +53,10 @@ func Login(conn *mongo.Client) http.HandlerFunc {
 			return
 		}
 		defer r.Body.Close()
-		var temp model.User
+		var temp entities.User
 		collection := conn.Database("oss").Collection("users")
 
-		err := collection.FindOne(r.Context(), bson.M{"name": user.Name}).Decode(&temp)
+		err := collection.FindOne(r.Context(), bson.M{"nama": user.Nama}).Decode(&temp)
 		if err != nil {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(Map{"error": err.Error()})
@@ -67,9 +68,10 @@ func Login(conn *mongo.Client) http.HandlerFunc {
 			json.NewEncoder(w).Encode(Map{"error": err.Error()})
 			return
 		}
+		fmt.Print(temp)
 		expTime := time.Now().Add(time.Minute * 2)
 		claims := &config.Claims{
-			User: user.Name,
+			User: user.Nama,
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(expTime),
 			},
@@ -97,22 +99,6 @@ func Login(conn *mongo.Client) http.HandlerFunc {
 }
 
 func Logout(conn *mongo.Client) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		// hapus token yang ada di cookie
-		http.SetCookie(w, &http.Cookie{
-			Name:     "token",
-			Path:     "/",
-			Value:    "",
-			HttpOnly: true,
-			MaxAge:   -1,
-		})
-
-		response := map[string]string{"message": "logout berhasil"}
-		helper.ResponseJSON(w, http.StatusOK, response)
-	}
-
-}
-func Test(conn *mongo.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// hapus token yang ada di cookie
 		http.SetCookie(w, &http.Cookie{
