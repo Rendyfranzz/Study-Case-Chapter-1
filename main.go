@@ -2,43 +2,44 @@ package main
 
 import (
 	"context"
-	"crud/authmid"
-	"crud/controller"
-	"crud/db"
 	"log"
-	"net/http"
 
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	"github.com/Rendyfranzz/Study-Case-Chapter-1/config"
+	"github.com/Rendyfranzz/Study-Case-Chapter-1/handlers"
+	"github.com/Rendyfranzz/Study-Case-Chapter-1/pkg"
+	"github.com/Rendyfranzz/Study-Case-Chapter-1/repo"
+	"github.com/Rendyfranzz/Study-Case-Chapter-1/service"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
-	conn, closeConnection, err := db.Connect("mongodb://localhost:27017/oss")
+	conn, closeConnection, err := config.Connect("mongodb://app_user:app_password@localhost:27017/admin")
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	defer closeConnection(context.Background())
 
-	log.Println("Connection ready!!!")
+	jwt := pkg.JWT{}
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Post("/register", controller.Register(conn))
-	r.Post("/login", controller.Login(conn))
-	r.Get("/nib/{id}", controller.GetNib(conn))
-	r.Post("/regisnib", controller.RegisterNib(conn))
-	r.Post("/addnews", controller.AddNews(conn))
-	r.Get("/getnews", controller.GetNews(conn))
-	r.Group(func(r chi.Router) {
-		r.Use(authmid.JWTMiddleware)
-		r.Post("/logout", controller.Logout(conn))
-		r.Get("/test", Index)
-		r.Post("/pengajuan", controller.Pengajuan(conn))
-		r.Put("/updatepengajuan/{nik}", controller.EditPengajuan(conn))
-	})
-	if err := http.ListenAndServe(":8080", r); err != nil {
-		log.Fatal(err)
-	}
+	userRepo := repo.NewUserRepo(conn)
+	nibRepo := repo.NewNIBRepo(conn)
+
+	authService := service.NewAuthService(userRepo, jwt)
+	nibService := service.NewNIBService(nibRepo)
+
+	e := echo.New()
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
+
+	e.POST("/api/login", handlers.Login(authService))
+	e.POST("/api/register", handlers.Register(authService))
+
+	group := e.Group("/api", JWTMiddleware(jwt))
+	group.POST("/logout", handlers.Logout())
+	group.GET("/nib/:id", handlers.GetNIB(nibService))
+	group.POST("/nib", handlers.CreateNIB(nibService))
+
+	e.Start(":6000")
 }
