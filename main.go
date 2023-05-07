@@ -41,11 +41,11 @@ func main() {
 	e.POST("/api/login", handlers.Login(authService))
 	e.POST("/api/register", handlers.Register(authService))
 	e.GET("/api/news", handlers.GetNews(newsService))
+	e.GET("/api/nib/:id", handlers.GetNIB(nibService))
+	e.POST("/nib", handlers.CreateNIB(nibService))
 
 	group := e.Group("/api", JWTMiddleware(jwt))
 	group.POST("/logout", handlers.Logout())
-	group.GET("/nib/:id", handlers.GetNIB(nibService))
-	group.POST("/nib", handlers.CreateNIB(nibService))
 	group.POST("/submission", handlers.CreateSubmissions(submissionService))
 	group.PUT("/submission/:nik", handlers.EditSubmission(submissionService))
 
