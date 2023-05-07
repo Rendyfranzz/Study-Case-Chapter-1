@@ -14,7 +14,8 @@ import (
 )
 
 func main() {
-	conn, closeConnection, err := config.Connect("mongodb://app_user:app_password@localhost:27017/admin")
+	// conn, closeConnection, err := config.Connect("mongodb://app_user:app_password@localhost:27017/admin")
+	conn, closeConnection, err := config.Connect("mongodb://localhost:27017/oss")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -25,9 +26,13 @@ func main() {
 
 	userRepo := repo.NewUserRepo(conn)
 	nibRepo := repo.NewNIBRepo(conn)
+	submissionRepo := repo.NewSubmissionRepo(conn)
+	newsRepo := repo.NewNewsRepo(conn)
 
 	authService := service.NewAuthService(userRepo, jwt)
 	nibService := service.NewNIBService(nibRepo)
+	submissionService := service.NewSubmissionService(submissionRepo)
+	newsService := service.NewNewsService(newsRepo)
 
 	e := echo.New()
 	e.Use(middleware.Logger())
@@ -35,11 +40,14 @@ func main() {
 
 	e.POST("/api/login", handlers.Login(authService))
 	e.POST("/api/register", handlers.Register(authService))
+	e.GET("/api/news", handlers.GetNews(newsService))
 
 	group := e.Group("/api", JWTMiddleware(jwt))
 	group.POST("/logout", handlers.Logout())
 	group.GET("/nib/:id", handlers.GetNIB(nibService))
 	group.POST("/nib", handlers.CreateNIB(nibService))
+	group.POST("/submission", handlers.CreateSubmissions(submissionService))
+	group.PUT("/submission/:nik", handlers.EditSubmission(submissionService))
 
-	e.Start(":6000")
+	e.Start(":8080")
 }
