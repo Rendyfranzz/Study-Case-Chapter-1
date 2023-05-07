@@ -21,3 +21,21 @@ type NIB struct {
 	StatusAktif   string `json:"status_keaktifan" bson:"aktif"`
 	StatusMigrasi string `json:"status_migrasi" bson:"migrasi"`
 }
+
+type Submission struct {
+	ID           string `json:"id" bson:"_id"`
+	Nik          string `json:"nik" bson:"nik"`
+	Nama         string `json:"nama" bson:"nama"`
+	NoPonsel     string `json:"no_ponsel" bson:"ponsel"`
+	JenisKelamin string `json:"jenis_kelamin" bson:"kelamin"`
+	Alamat       string `json:"alamat" bson:"alamat"`
+	Npwp         string `json:"npwp" bson:"npwp"`
+	NoBpjs       string `json:"no_bpjs" bson:"no_bpjs"`
+}
+
+type News struct {
+	ID        string `json:"id" bson:"_id"`
+	Judul     string `json:"judul" bson:"judul"`
+	Deskripsi string `json:"deskripsi" bson:"deskripsi"`
+	Tanggal   string `json:"tanggal" bson:"tanggal"`
+}
